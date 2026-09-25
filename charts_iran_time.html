@@ -1,1 +1,188 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+<meta charset="UTF-8">
+<title>الر‌ت حرفه‌ای برای ۱۲ ارز بایننس</title>
+<style>
+    body { background:#111; color:#eee; font-family:sans-serif; direction:rtl; }
+    h1 { text-align:center; font-size:18px; }
+    .container { max-width:900px; margin:0 auto; }
+    .symbol-box {
+        border:1px solid #444;
+        border-radius:6px;
+        padding:8px;
+        margin:6px 0;
+        background:#1a1a1a;
+    }
+    .symbol-title { font-weight:bold; margin-bottom:4px; }
+    .log {
+        font-size:12px;
+        max-height:120px;
+        overflow-y:auto;
+        background:#000;
+        padding:6px;
+        border-radius:4px;
+        margin-top:4px;
+    }
+    .log div { margin-bottom:2px; }
+</style>
+</head>
+<body>
 
+<h1>سیستم الر‌ت برای ۱۲ ارز (Binance)</h1>
+<div class="container" id="symbols"></div>
+
+<script>
+// --- تعریف نمادها ---
+const pairs = [
+  { sym: "btcusdt", name: "BTCUSDT" },
+  { sym: "ethusdt", name: "ETHUSDT" },
+  { sym: "bnbusdt", name: "BNBUSDT" },
+  { sym: "solusdt", name: "SOLUSDT" },
+  { sym: "xrpusdt", name: "XRPUSDT" },
+  { sym: "adausdt", name: "ADAUSDT" },
+  { sym: "dogeusdt", name: "DOGEUSDT" },
+  { sym: "trxusdt", name: "TRXUSDT" },
+  { sym: "maticusdt", name: "MATICUSDT" },
+  { sym: "linkusdt", name: "LINKUSDT" },
+  { sym: "ltcusdt", name: "LTCUSDT" },
+  { sym: "atomusdt", name: "ATOMUSDT" }
+];
+
+// --- تعریف الر‌ت‌ها برای هر نماد ---
+// می‌تونی مقادیر رو به دلخواه عوض کنی
+const alerts = {
+  BTCUSDT: [
+    { type: "price_above", value: 70000, triggered: false },
+    { type: "price_below", value: 60000, triggered: false }
+  ],
+  ETHUSDT: [
+    { type: "price_above", value: 4000, triggered: false }
+  ],
+  BNBUSDT: [
+    { type: "price_above", value: 500, triggered: false }
+  ],
+  SOLUSDT: [
+    { type: "price_above", value: 200, triggered: false }
+  ],
+  XRPUSDT: [
+    { type: "price_above", value: 1, triggered: false }
+  ],
+  ADAUSDT: [
+    { type: "price_above", value: 1.5, triggered: false }
+  ],
+  DOGEUSDT: [
+    { type: "price_above", value: 0.2, triggered: false }
+  ],
+  TRXUSDT: [
+    { type: "price_above", value: 0.2, triggered: false }
+  ],
+  MATICUSDT: [
+    { type: "price_above", value: 2, triggered: false }
+  ],
+  LINKUSDT: [
+    { type: "price_above", value: 20, triggered: false }
+  ],
+  LTCUSDT: [
+    { type: "price_above", value: 120, triggered: false }
+  ],
+  ATOMUSDT: [
+    { type: "price_above", value: 20, triggered: false }
+  ]
+};
+
+// --- ساخت UI ساده برای هر نماد ---
+const container = document.getElementById("symbols");
+
+pairs.forEach(p => {
+  const box = document.createElement("div");
+  box.className = "symbol-box";
+  box.id = `box-${p.name}`;
+
+  const title = document.createElement("div");
+  title.className = "symbol-title";
+  title.textContent = `${p.name}`;
+
+  const priceDiv = document.createElement("div");
+  priceDiv.textContent = "آخرین قیمت: ...";
+  priceDiv.id = `price-${p.name}`;
+
+  const logDiv = document.createElement("div");
+  logDiv.className = "log";
+  logDiv.id = `log-${p.name}`;
+
+  box.appendChild(title);
+  box.appendChild(priceDiv);
+  box.appendChild(logDiv);
+  container.appendChild(box);
+});
+
+// --- تابع ثبت لاگ در صفحه ---
+function logMessage(symbolName, msg) {
+  const logDiv = document.getElementById(`log-${symbolName}`);
+  if (!logDiv) return;
+  const line = document.createElement("div");
+  const now = new Date().toLocaleTimeString("fa-IR");
+  line.textContent = `[${now}] ${msg}`;
+  logDiv.prepend(line);
+}
+
+// --- چک کردن الر‌ت‌ها ---
+function checkAlerts(symbolName, closePrice) {
+  const list = alerts[symbolName];
+  if (!list) return;
+
+  list.forEach(a => {
+    if (a.triggered) return;
+
+    if (a.type === "price_above" && closePrice > a.value) {
+      a.triggered = true;
+      const msg = `${symbolName}: قیمت رفت بالاتر از ${a.value} (قیمت فعلی: ${closePrice})`;
+      logMessage(symbolName, msg);
+      alert(msg);
+    }
+
+    if (a.type === "price_below" && closePrice < a.value) {
+      a.triggered = true;
+      const msg = `${symbolName}: قیمت اومد پایین‌تر از ${a.value} (قیمت فعلی: ${closePrice})`;
+      logMessage(symbolName, msg);
+      alert(msg);
+    }
+  });
+}
+
+// --- اتصال WebSocket برای هر نماد ---
+pairs.forEach(p => {
+  const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${p.sym}@kline_1m`);
+
+  ws.onopen = () => {
+    logMessage(p.name, "اتصال WebSocket برقرار شد.");
+  };
+
+  ws.onerror = (err) => {
+    logMessage(p.name, "خطا در WebSocket.");
+    console.error("WS Error", p.name, err);
+  };
+
+  ws.onclose = () => {
+    logMessage(p.name, "اتصال WebSocket بسته شد.");
+  };
+
+  ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    const k = data.k;
+    const close = parseFloat(k.c);
+
+    const priceDiv = document.getElementById(`price-${p.name}`);
+    if (priceDiv) {
+      priceDiv.textContent = `آخرین قیمت: ${close}`;
+    }
+
+    // چک کردن الر‌ت‌ها
+    checkAlerts(p.name, close);
+  };
+});
+</script>
+
+</body>
+</html>
