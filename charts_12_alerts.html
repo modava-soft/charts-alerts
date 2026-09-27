@@ -2,9 +2,8 @@
 <html lang="fa">
 <head>
 <meta charset="UTF-8">
-<title>۱۲ نمودار زنده با SMA و WMA + الرت</title>
+<title>۱۲ نمودار زنده با SMA و WMA</title>
 
-<!-- Lightweight Charts -->
 <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 
 <style>
@@ -28,7 +27,7 @@
         border:1px solid #333;
         border-radius:6px;
         position:relative;
-        height:260px; /* مهم‌ترین اصلاح */
+        height:260px; /* مهم‌ترین بخش برای نمایش نمودار */
     }
 
     .title {
@@ -39,24 +38,12 @@
         color:#ccc;
         z-index:10;
     }
-
-    #log {
-        background:#000;
-        padding:10px;
-        margin:10px;
-        border-radius:6px;
-        height:150px;
-        overflow-y:auto;
-        font-size:12px;
-    }
 </style>
 </head>
 
 <body>
 
-<h2 style="text-align:center; padding:10px;">۱۲ نمودار زنده با SMA و WMA + الرت تغییر جهت</h2>
-
-<div id="log"></div>
+<h2 style="text-align:center; padding:10px;">۱۲ نمودار زنده با SMA و WMA</h2>
 
 <div class="grid" id="charts"></div>
 
@@ -113,17 +100,6 @@ function WMA(data, period) {
 }
 
 // -------------------------
-// ثبت پیام در لاگ
-// -------------------------
-function log(msg) {
-    const div = document.getElementById("log");
-    const line = document.createElement("div");
-    const now = new Date().toLocaleTimeString("fa-IR");
-    line.textContent = `[${now}] ${msg}`;
-    div.prepend(line);
-}
-
-// -------------------------
 // ساخت ۱۲ نمودار
 // -------------------------
 const chartsDiv = document.getElementById("charts");
@@ -157,7 +133,6 @@ symbols.forEach(symbol => {
     const wmaSeries = chart.addLineSeries({ color:'yellow', lineWidth:2 });
 
     let candles = [];
-    let lastWMA = null;
 
     const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@kline_15m`);
 
@@ -187,25 +162,6 @@ symbols.forEach(symbol => {
         sma50Series.setData(candles.map((c,i)=>({time:c.time, value:sma50[i]})));
         sma100Series.setData(candles.map((c,i)=>({time:c.time, value:sma100[i]})));
         sma200Series.setData(candles.map((c,i)=>({time:c.time, value:sma200[i]})));
-
-        const last = wma[wma.length - 1];
-        const prev = wma[wma.length - 2];
-
-        if (last && prev) {
-            if (last > prev) {
-                wmaSeries.applyOptions({ color:'lime' });
-                if (lastWMA !== "up") {
-                    log(`${symbol}: WMA صعودی شد`);
-                    lastWMA = "up";
-                }
-            } else {
-                wmaSeries.applyOptions({ color:'red' });
-                if (lastWMA !== "down") {
-                    log(`${symbol}: WMA نزولی شد`);
-                    lastWMA = "down";
-                }
-            }
-        }
 
         wmaSeries.setData(candles.map((c,i)=>({time:c.time, value:wma[i]})));
     };
