@@ -2,7 +2,7 @@
 <html lang="fa">
 <head>
 <meta charset="UTF-8">
-<title>۱۲ نمودار زنده با WMA رنگی</title>
+<title>۱۲ نمودار زنده فقط با WMA رنگی</title>
 
 <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 
@@ -43,7 +43,7 @@
 
 <body>
 
-<h2 style="text-align:center; padding:10px;">۱۲ نمودار زنده با WMA رنگی</h2>
+<h2 style="text-align:center; padding:10px;">۱۲ نمودار زنده فقط با WMA رنگی</h2>
 
 <div class="grid" id="charts"></div>
 
@@ -106,6 +106,8 @@ symbols.forEach(symbol => {
     });
 
     const candleSeries = chart.addCandlestickSeries();
+
+    // WMA دو رنگ
     const wmaUpSeries   = chart.addLineSeries({ color:'lime', lineWidth:2 });
     const wmaDownSeries = chart.addLineSeries({ color:'red', lineWidth:2 });
 
