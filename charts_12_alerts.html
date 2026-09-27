@@ -2,7 +2,7 @@
 <html lang="fa">
 <head>
 <meta charset="UTF-8">
-<title>۱۲ نمودار زنده با SMA و WMA</title>
+<title>۱۲ نمودار زنده با WMA رنگی</title>
 
 <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 
@@ -27,7 +27,7 @@
         border:1px solid #333;
         border-radius:6px;
         position:relative;
-        height:260px; /* مهم‌ترین بخش برای نمایش نمودار */
+        height:260px; /* مهم */
     }
 
     .title {
@@ -43,7 +43,7 @@
 
 <body>
 
-<h2 style="text-align:center; padding:10px;">۱۲ نمودار زنده با SMA و WMA</h2>
+<h2 style="text-align:center; padding:10px;">۱۲ نمودار زنده با WMA رنگی</h2>
 
 <div class="grid" id="charts"></div>
 
@@ -58,25 +58,6 @@ const symbols = [
 ];
 
 const iranOffset = 12600; // زمان ایران
-
-// -------------------------
-// توابع محاسبه SMA
-// -------------------------
-function SMA(data, period) {
-    let result = [];
-    for (let i = 0; i < data.length; i++) {
-        if (i < period) {
-            result.push(null);
-            continue;
-        }
-        let sum = 0;
-        for (let j = i - period; j < i; j++) {
-            sum += data[j].close;
-        }
-        result.push(sum / period);
-    }
-    return result;
-}
 
 // -------------------------
 // محاسبه WMA
@@ -125,12 +106,8 @@ symbols.forEach(symbol => {
     });
 
     const candleSeries = chart.addCandlestickSeries();
-    const sma10Series = chart.addLineSeries({ color:'#888' });
-    const sma50Series = chart.addLineSeries({ color:'#aaa' });
-    const sma100Series = chart.addLineSeries({ color:'#ccc' });
-    const sma200Series = chart.addLineSeries({ color:'#fff' });
-
-    const wmaSeries = chart.addLineSeries({ color:'yellow', lineWidth:2 });
+    const wmaUpSeries   = chart.addLineSeries({ color:'lime', lineWidth:2 });
+    const wmaDownSeries = chart.addLineSeries({ color:'red', lineWidth:2 });
 
     let candles = [];
 
@@ -150,20 +127,31 @@ symbols.forEach(symbol => {
         candles.push(candle);
         candleSeries.update(candle);
 
-        if (candles.length < 210) return;
+        if (candles.length < 50) return;
 
-        const sma10 = SMA(candles, 10);
-        const sma50 = SMA(candles, 50);
-        const sma100 = SMA(candles, 100);
-        const sma200 = SMA(candles, 200);
         const wma = WMA(candles, 20);
 
-        sma10Series.setData(candles.map((c,i)=>({time:c.time, value:sma10[i]})));
-        sma50Series.setData(candles.map((c,i)=>({time:c.time, value:sma50[i]})));
-        sma100Series.setData(candles.map((c,i)=>({time:c.time, value:sma100[i]})));
-        sma200Series.setData(candles.map((c,i)=>({time:c.time, value:sma200[i]})));
+        const wmaUp   = [];
+        const wmaDown = [];
 
-        wmaSeries.setData(candles.map((c,i)=>({time:c.time, value:wma[i]})));
+        for (let i = 1; i < wma.length; i++) {
+            if (wma[i] === null) {
+                wmaUp.push({ time:candles[i].time, value:null });
+                wmaDown.push({ time:candles[i].time, value:null });
+                continue;
+            }
+
+            if (wma[i] > wma[i-1]) {
+                wmaUp.push({ time:candles[i].time, value:wma[i] });
+                wmaDown.push({ time:candles[i].time, value:null });
+            } else {
+                wmaUp.push({ time:candles[i].time, value:null });
+                wmaDown.push({ time:candles[i].time, value:wma[i] });
+            }
+        }
+
+        wmaUpSeries.setData(wmaUp);
+        wmaDownSeries.setData(wmaDown);
     };
 });
 </script>
