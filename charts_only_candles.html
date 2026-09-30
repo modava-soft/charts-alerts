@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+<meta charset="UTF-8">
+<title>نمودار کندل چند ارز</title>
+
+<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+
+<style>
+    body {
+        background:#111;
+        color:#eee;
+        font-family:sans-serif;
+        direction:rtl;
+        margin:0;
+        padding:0;
+    }
+
+    .grid {
+        display:grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        padding: 10px;
+    }
+
+    .chart {
+        border:1px solid #333;
+        border-radius:6px;
+        position:relative;
+        height:260px; /* مهم */
+    }
+
+    .title {
+        position:absolute;
+        top:4px;
+        left:6px;
+        font-size:13px;
+        color:#ccc;
+        z-index:10;
+    }
+</style>
+</head>
+
+<body>
+
+<h2 style="text-align:center; padding:10px;">نمودار کندل چند ارز</h2>
+
+<div class="grid" id="charts"></div>
+
+<script>
+// -------------------------
+// ارزهای مورد نظر
+// -------------------------
+const symbols = [
+  "BTCUSDT","ETHUSDT","BNBUSDT","SOLUSDT",
+  "XRPUSDT","ADAUSDT","DOGEUSDT","TRXUSDT",
+  "MATICUSDT","LINKUSDT","LTCUSDT","ATOMUSDT"
+];
+
+const iranOffset = 12600; // زمان ایران
+
+// -------------------------
+// ساخت نمودارها
+// -------------------------
+const chartsDiv = document.getElementById("charts");
+
+symbols.forEach(symbol => {
+    const box = document.createElement("div");
+    box.className = "chart";
+    box.id = "chart-" + symbol;
+
+    const title = document.createElement("div");
+    title.className = "title";
+    title.textContent = symbol;
+
+    box.appendChild(title);
+    chartsDiv.appendChild(box);
+
+    const chart = LightweightCharts.createChart(box, {
+        width: box.clientWidth,
+        height: box.clientHeight,
+        layout: { backgroundColor:'#111', textColor:'#ccc' },
+        grid: { vertLines:{color:'#333'}, horzLines:{color:'#333'} },
+        timeScale: { timeVisible:true }
+    });
+
+    const candleSeries = chart.addCandlestickSeries();
+
+    let candles = [];
+
+    const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@kline_15m`);
+
+    ws.onmessage = (event) => {
+        const k = JSON.parse(event.data).k;
+
+        const candle = {
+            time: (k.t / 1000) + iranOffset,
+            open: parseFloat(k.o),
+            high: parseFloat(k.h),
+            low: parseFloat(k.l),
+            close: parseFloat(k.c)
+        };
+
+        candles.push(candle);
+        candleSeries.update(candle);
+    };
+});
+</script>
+
+</body>
+</html>
